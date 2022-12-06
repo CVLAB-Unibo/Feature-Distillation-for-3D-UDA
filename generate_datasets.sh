@@ -1,0 +1,6 @@
+python generate_pseudo_labels.py modelnet shapenet
+python generate_pseudo_labels.py modelnet scannet
+python generate_pseudo_labels.py shapenet modelnet
+python generate_pseudo_labels.py shapenet scannet
+python generate_pseudo_labels.py scannet modelnet
+python generate_pseudo_labels.py scannet shapenet

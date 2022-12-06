@@ -1,0 +1,4 @@
+
+#optimizer
+optimizer_name: "adamw"
+weight_decay: 0.0001

@@ -1,0 +1,34 @@
+
+task: "@OPTIONS(classification;reconstruction;contrastive)"
+dataset_source: "@BASE(dataset)"
+dataset_target: "@BASE(dataset,scannet)"
+net: "@BASE(net,pointnet)"
+optimizers: "@BASE(optimizers,adamw)"  
+losses: "@BASE(losses,crossentropy)"
+sampling: "@OPTIONS(uniform;first;fps)"
+
+gpu: [0]
+num_workers: 12
+project_name: "@OPTIONS(m2s;m2sc;s2m;s2sc;sc2m;sc2s;m2scnn)"
+num_classes: 10
+test: "@BOOL(false)"
+restore_weights: "null"
+
+#haprams
+epochs: 25
+train_batch_size_source: 64
+train_batch_size_target: 64
+val_batch_size: 256
+lr: 1e-3
+aug: "@BOOL(true)"
+pc_input_num: 1024
+feat_dims: 1024
+occlusions: "@BOOL(true)"
+val_split: "@BOOL(false)"
+
+#haprams for mean teacher
+mean_teacher: "@BOOL(true)"
+max_weight: 1
+teacher_temp: 0.1
+student_temp: 0.5
+ssl_classes: 10
