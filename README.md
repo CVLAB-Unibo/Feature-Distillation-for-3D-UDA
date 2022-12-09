@@ -35,7 +35,7 @@ In the provided script, we load "modelnet" and "scannet" to the "m2sc" project.
 
 ## Training
 
-To train modelnet->scannet, set the entity filed inside "main.py" in the wandb.init function and execute the following commands:
+To train modelnet->scannet, set the entity file inside "main.py" in the wandb.init function and execute the following commands:
 
 ```bash
 # step1 
