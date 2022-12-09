@@ -40,8 +40,6 @@ def main():
         else:
             from trainers.classification_trainer_MTG_DINO import Classifier
             artifact.add_file('trainers/classification_trainer_MTG_DINO.py')
-    else:
-        from trainers.baseline import Classifier
     run.log_artifact(artifact)
     
     from datamodules.classification_datamodule import DataModule
