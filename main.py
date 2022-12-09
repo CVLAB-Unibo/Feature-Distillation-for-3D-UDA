@@ -28,7 +28,7 @@ def main():
         job_type="train",
         project=hcfg("project_name"),
         name=get_run_name(),
-        entity="cvpr",
+        entity="yourentity",
         dir=get_out_dir(),
         save_code=True
     )
