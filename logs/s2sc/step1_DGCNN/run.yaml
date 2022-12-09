@@ -1,4 +1,4 @@
-'***hesiod_out_dir***': /home/acardace/projects/SSL_3DDA/logs/s2sc/step1_DGCNN_new
+'***hesiod_out_dir***': logs/s2sc/step1_DGCNN
 task: classification
 step: 1
 aug: true
@@ -19,7 +19,7 @@ optimizers: {optimizer_name: adamw, weight_decay: 0.0001}
 pc_input_num: 1024
 project_name: s2sc
 restore_weights: 'null'
-run_name: step1_DGCNN_new
+run_name: step1_DGCNN
 sampling: uniform
 student_temp: 0.5
 teacher_temp: 0.1
