@@ -48,9 +48,9 @@ elif target_domain=="scannet":
     min_conf = 0.5
 
 #modify based on architecture
-dataset_name = source_domain+"_"+ target_domain + "_step1_dgcnn"
+dataset_name = source_domain+"_"+ target_domain + "_step1"
 proj = s+"2"+t
-root = Path(f"logs/{proj}/step1_DGCNN")
+root = Path(f"logs/{proj}/step1")
 ckpt_path = root / "checkpoint/best.ckpt"
 run_file_path = root / "run.yaml"
 device = "cuda"
