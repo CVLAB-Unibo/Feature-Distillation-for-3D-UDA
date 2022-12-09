@@ -16,7 +16,6 @@ def collate_fn(list_data):
     lbl_init = torch.tensor([d["labels_init"] for d in list_data], dtype=torch.int64)
     paths = np.array([d["paths"] for d in list_data])
     true_lbl = torch.tensor([d["true_labels"] for d in list_data], dtype=torch.int64)
-    # masks = torch.tensor([d["mask"] for d in list_data], dtype=torch.bool)
     
     return {
         "original_coordinates": original_coordinates,
@@ -26,7 +25,6 @@ def collate_fn(list_data):
         "lbl_init": lbl_init,
         "paths": paths,
         "true_labels": true_lbl,
-        # "masks": masks
     }
 
 class DataModule(pl.LightningDataModule):

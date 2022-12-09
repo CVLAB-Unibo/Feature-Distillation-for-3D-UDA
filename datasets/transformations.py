@@ -143,30 +143,4 @@ def rotate_shape(x, axis, angle):
     else:
         return x.dot(R_z).astype('float32')
 
-# def farthest_point_sample_np(xyz, npoint):
-#     """
-#     Input:
-#         xyz: pointcloud data, [B, C, N]
-#         npoint: number of samples
-#     Return:
-#         centroids: sampled pointcloud index, [B, npoint]
-#     """
-
-#     B, C, N = xyz.shape
-#     centroids = np.zeros((B, npoint), dtype=np.int64)
-#     distance = np.ones((B, N)) * 1e10
-#     farthest = np.random.randint(0, N, (B,), dtype=np.int64)
-#     batch_indices = np.arange(B, dtype=np.int64)
-#     centroids_vals = np.zeros((B, C, npoint))
-#     for i in range(npoint):
-#         centroids[:, i] = farthest  # save current chosen point index
-#         centroid = xyz[batch_indices, :, farthest].reshape(B, 3, 1)  # get the current chosen point value
-#         centroids_vals[:, :, i] = centroid[:, :, 0].copy()
-#         dist = np.sum((xyz - centroid) ** 2, 1)  # euclidean distance of points from the current centroid
-#         mask = dist < distance  # save index of all point that are closer than the current max distance
-#         distance[mask] = dist[mask]  # save the minimal distance of each point from all points that were chosen until now
-#         farthest = np.argmax(distance, axis=1)  # get the index of the point farthest away
-#     return centroids, centroids_vals
-
-
 

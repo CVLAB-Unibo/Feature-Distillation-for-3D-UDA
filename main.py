@@ -11,8 +11,8 @@ import time
 import sys
 import numpy as np
 
-seed = np.random.randint(1000)
-pl.seed_everything(seed)
+# seed = np.random.randint(1000)
+# pl.seed_everything(seed)
 
 # @hmain(base_cfg_dir=Path("cfg"), template_cfg_file=Path("cfg/template.yaml"))
 run_cfg = Path(sys.argv[1])

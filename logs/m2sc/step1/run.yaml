@@ -1,0 +1,31 @@
+'***hesiod_out_dir***': logs/m2sc/step1
+task: classification
+step: 1
+aug: true
+dataset_source: {name: modelnet}
+dataset_target: {name: scannet}
+epochs: 100
+feat_dims: 1024
+gpu: [0]
+losses: {loss_fn: crossentropy}
+lr: 0.001
+max_weight: 1
+mean_teacher: true
+net: {name: pointnet}
+num_classes: 10
+num_workers: 12
+occlusions: true
+optimizers: {optimizer_name: adamw, weight_decay: 0.0001}
+pc_input_num: 1024
+project_name: m2sc
+restore_weights: 'null'
+run_name: step1
+sampling: uniform
+student_temp: 0.5
+teacher_temp: 0.1
+test: false
+train_batch_size_source: 64
+train_batch_size_target: 64
+val_batch_size: 128
+val_split: false
+ssl_classes: 10

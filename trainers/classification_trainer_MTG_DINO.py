@@ -4,8 +4,7 @@ from torch import nn
 import pytorch_lightning as pl
 from torch._C import device
 from networks.factory import get_model, GCN
-from networks.reconstruction import ReconstructionNet
-from utils.losses import get_loss_fn, DINOLoss, Paws_loss
+from utils.losses import get_loss_fn, Distillation_Loss
 from hesiod import hcfg
 from hesiod import get_cfg_copy
 from utils.optimizers import get_optimizer
@@ -13,7 +12,6 @@ import numpy as np
 import wandb
 import torch.nn.functional as F
 import torchmetrics
-from sklearn.metrics import confusion_matrix, classification_report, precision_score, accuracy_score
 from tqdm import tqdm
 
 from torch.utils.tensorboard import SummaryWriter
@@ -35,7 +33,7 @@ class Classifier(pl.LightningModule):
         self.automatic_optimization = False
         self.save_hyperparameters(get_cfg_copy())
         self.target_dl = iter(dm.train_dataloader_target())
-        self.ssl_loss = DINOLoss(self.hparams.ssl_classes, teacher_temp=self.hparams.teacher_temp, student_temp=self.hparams.student_temp)
+        self.ssl_loss = Distillation_Loss(self.hparams.ssl_classes, teacher_temp=self.hparams.teacher_temp, student_temp=self.hparams.student_temp)
         self.gnn = GCN(num_features=1024, num_classes=10)
         self.optimizer_gnn = torch.optim.Adam(self.gnn.parameters(), lr=0.001, weight_decay=5e-4)
         self.criterion_gnn = torch.nn.CrossEntropyLoss()
@@ -230,65 +228,17 @@ class Classifier(pl.LightningModule):
             self.class_scores_gnn, self.scores_gnn, self.predictions_gnn = self.test_gnn(self.gnn, self.train_graph, self.train_scores, edge_index)
             new_labels = {}
 
-            print(1-weight, "*********************", 1-self.current_epoch/100)
             new_confident_gnn = self.filter_data(self.predictions_gnn.cpu(), self.scores_gnn.cpu(), 1-self.current_epoch/100, 10)                     #(1-weight per selezionare più sample target)
-            
-            self.scores_gnn = self.class_scores_gnn
-            self.predictions_gnn = self.scores_gnn.argmax(-1)
-            prediction_net = self.train_scores.argmax(-1)
-
-            print("GNN")
-            print(classification_report(self.true_labels[new_confident_gnn].cpu(), self.predictions_gnn[new_confident_gnn].cpu(), labels=np.arange(10)))
-            print("net")
-            print(classification_report(self.true_labels[new_confident_gnn].cpu(), prediction_net[new_confident_gnn].cpu(), labels=np.arange(10)))
-            print("original")
-            print(classification_report(self.true_labels[new_confident_gnn].cpu(), self.train_pl_init[new_confident_gnn].cpu(), labels=np.arange(10)))
-                    
-            gnn_precision = precision_score(self.true_labels[new_confident_gnn].cpu(), self.predictions_gnn[new_confident_gnn].cpu(), labels=np.arange(10), average="micro")
-            original_precision = precision_score(self.true_labels[new_confident_gnn].cpu(), self.train_pl_init[new_confident_gnn].cpu(), labels=np.arange(10), average="micro")
-            
-            gnn_acc = accuracy_score(self.true_labels[new_confident_gnn].cpu(), self.predictions_gnn[new_confident_gnn].cpu())
-            original_acc = accuracy_score(self.true_labels[new_confident_gnn].cpu(), self.train_pl_init[new_confident_gnn].cpu())
-
-
-            gnn_precision_total = precision_score(self.true_labels.cpu(), self.predictions_gnn.cpu(), labels=np.arange(10), average="micro")
-            original_precision_total = precision_score(self.true_labels.cpu(), self.train_pl_init.cpu(), labels=np.arange(10), average="micro")
-            
-            gnn_acc_total = accuracy_score(self.true_labels.cpu(), self.predictions_gnn.cpu())
-            original_acc_total = accuracy_score(self.true_labels.cpu(), self.train_pl_init.cpu())
-
-            self.logger.experiment.log(
-            {
-                "valid/gnn_precision": gnn_precision,
-                "valid/original_precision": original_precision,
-                "valid/gnn_acc": gnn_acc,
-                "valid/original_acc": original_acc,
-
-                "valid/gnn_precision_total": gnn_precision_total,
-                "valid/original_precision_total": original_precision_total,
-                "valid/gnn_acc_total": gnn_acc_total,
-                "valid/original_acc_total": original_acc_total,
-
-                "valid/confident":len(self.confident_paths)
-            })
-
-
             for path, new_label in zip(self.pl_paths[new_confident_gnn], self.predictions_gnn[new_confident_gnn]):
                 new_labels[path] = new_label.item()
                 if path not in self.confident_paths:
                     self.confident_paths.append(path) 
             self.dm.train_ds.update_labels(new_labels)
 
-        # self.manual_backward(loss)
-        # opt.step()
         self.scaler.scale(loss).backward()
         self.scaler.step(opt)
         self.scaler.update()
-
-
-        # if self.global_step % len(self.dm) == 0:
         lr_scheduler.step()
-
         self.update_ema_variables()
 
         return {"loss": loss}
@@ -350,7 +300,6 @@ class Classifier(pl.LightningModule):
         }
 
     def validation_epoch_end(self, validation_step_outputs):
-        # print("\n")
 
         valid_acc_source = self.valid_acc_source.compute().item()
         print("SOURCE:", valid_acc_source)
@@ -460,7 +409,5 @@ class Classifier(pl.LightningModule):
 
     def configure_optimizers(self):
         opt = get_optimizer(list(self.net.parameters()))
-        # opt = get_optimizer(list(self.net.parameters()))
-        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.hparams.epochs)
         scheduler = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=hcfg("lr"), epochs=self.hparams.epochs, steps_per_epoch=len(self.dm))
         return [opt], [{"scheduler": scheduler, "interval": "step", "frequency": 1}]

@@ -1,0 +1,32 @@
+'***hesiod_out_dir***': /home/acardace/projects/SSL_3DDA/logs/s2m/step1_DGCNN_new
+task: classification
+step: 1
+aug: true
+dataset_source: {name: shapenet}
+dataset_target: {name: modelnet}
+epochs: 100
+feat_dims: 1024
+gpu: [0]
+losses: {loss_fn: crossentropy}
+lr: 0.001
+max_weight: 1
+mean_teacher: true
+net: {name: dgcnn}
+num_classes: 10
+num_workers: 12
+occlusions: false
+optimizers: {optimizer_name: adamw, weight_decay: 0.0001}
+pc_input_num: 1024
+project_name: s2m
+restore_weights: 'null'
+run_name: step1_DGCNN_new
+sampling: uniform
+student_temp: 0.5
+teacher_temp: 0.1
+test: false
+train_batch_size_source: 32
+train_batch_size_target: 32
+val_batch_size: 64
+val_split: false
+ssl_classes: 10
+lambda: 0.2

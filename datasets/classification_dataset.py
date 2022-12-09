@@ -219,37 +219,36 @@ class ClassificationDataset(data.Dataset):
 
         # source domain 
         if not self.target_domain:
+            # augment only for training data 
             if self.aug and self.split == "train":
-                pc = random_rotate_one_axis(pc, axis="z")
                 
+                # strongly augmented pc for student
+                pc = random_rotate_one_axis(pc, axis="z")
                 dist = ElasticDistortion(apply_distorsion=True, granularity=[0.2, 0.8], magnitude=[0.4, 1.6])
                 pc_data = Data(x=torch.tensor(pc), pos=torch.tensor(pc))
                 pc_data = dist(pc_data)
                 scale = RandomScale((0.7, 1.5))                
-                pc_data = scale(pc_data)       
-                # translate = RandomTranslate(0.2)
-                # pc_data = translate(pc_data)       
+                pc_data = scale(pc_data)           
                 pc = pc_data.pos.numpy()
-
                 pc = jitter_point_cloud(pc)
-                # weakly_pc = random_rotate_one_axis(weakly_pc, axis="z")
+
+                # weakly augmented pc for mean teacher
                 weakly_pc = jitter_point_cloud(weakly_pc)
 
                 if hcfg("occlusions") and ("shapenet" in self.name or "modelnet" in self.name) and not self.target_domain: 
                     pc = remove(pc)
-        # target domain -> augmemtation for DINO loss
+        # target domain
         else:
-                # pc = random_rotate_one_axis(pc, axis="z")
+                # strongly augmented pc for student
                 dist = ElasticDistortion(apply_distorsion=True, granularity=[0.2, 0.8], magnitude=[0.4, 1.6])
                 pc_data = Data(x=torch.tensor(pc), pos=torch.tensor(pc))
                 pc_data = dist(pc_data)
                 scale = RandomScale((0.7, 1.5))                
-                pc_data = scale(pc_data)       
-                # translate = RandomTranslate(0.2)
-                # pc_data = translate(pc_data)       
+                pc_data = scale(pc_data)             
                 pc = pc_data.pos.numpy()
-
                 pc = jitter_point_cloud(pc)
+                        
+                # weakly augmented pc for mean teacher
                 weakly_pc = jitter_point_cloud(weakly_pc)
 
         if pc.shape[0] > self.pc_input_num:
@@ -278,7 +277,6 @@ class ClassificationDataset(data.Dataset):
             "labels_init": lbl_init,
             "true_labels": true_lbl,
             "paths": pc_path,
-            # "mask": keep_mask_original
         }
 
     def __len__(self):

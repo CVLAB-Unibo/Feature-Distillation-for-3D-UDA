@@ -1,11 +1,9 @@
 #%%
 import sys
-from hesiod.core import set_cfg, get_cfg_copy
+from hesiod.core import set_cfg
 sys.path.append(".")
 import os
-# os.chdir("..")
 os.environ['WANDB_SILENT']="true"
-# from networks.reconstruction import ReconstructionNet
 
 from sklearn.metrics import confusion_matrix, classification_report
 import pickle 
@@ -49,9 +47,10 @@ elif target_domain=="scannet":
     tau = 0.95
     min_conf = 0.5
 
-dataset_name = source_domain+"_"+ target_domain + "_step1_pointnet"
+#modify based on architecture
+dataset_name = source_domain+"_"+ target_domain + "_step1_dgcnn"
 proj = s+"2"+t
-root = Path(f"logs/{proj}/step1")
+root = Path(f"logs/{proj}/step1_DGCNN")
 ckpt_path = root / "checkpoint/best.ckpt"
 run_file_path = root / "run.yaml"
 device = "cuda"
@@ -154,22 +153,7 @@ def main():
             paths.extend(paths_b)
             confidence = torch.cat((confidence, probs_b.cpu()), dim=0)
 
-    labels_s = torch.zeros((0)).to(device)
-    predictions_val = torch.zeros((0))
-
-    # for batch in tqdm(dataloader_val):
-    #     coords_b = batch["weakly_aug"].to(device)
-    #     labels_b_s = batch["labels"].to(device)
-    #     with torch.no_grad():
-    #         labels_s = torch.cat([labels_s, labels_b_s], dim=0)
-
-    #         _ , out = model.net(coords_b[:, :1024, :], embeddings=True)            
-    #         _, predictions_val_b = torch.max(out, dim=1)
-    #         predictions_val = torch.cat((predictions_val, predictions_val_b.cpu()), dim=0)
-            
-    # print_scores(predictions_val, labels_s, verbose=False, target_names=categories)
     paths_st = []
-
     new_dataset_root = Path("data") / Path(dataset_name) 
     os.makedirs(new_dataset_root)
     classes = ["bathtub", "bed", "bookshelf", "cabinet", "chair", "lamp", "monitor", "plant", "sofa", "table"]

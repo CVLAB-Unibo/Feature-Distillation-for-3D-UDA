@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import pytorch_lightning as pl
 from networks.factory import get_model
-from utils.losses import get_loss_fn, DINOLoss, Paws_loss
+from utils.losses import get_loss_fn, Distillation_Loss
 from hesiod import hcfg
 from hesiod import get_cfg_copy
 from utils.optimizers import get_optimizer
@@ -30,7 +30,7 @@ class Classifier(pl.LightningModule):
         self.automatic_optimization = False
         self.save_hyperparameters(get_cfg_copy())
         self.target_dl = iter(dm.train_dataloader_target())
-        self.ssl_loss = DINOLoss(self.hparams.ssl_classes, teacher_temp=self.hparams.teacher_temp, student_temp=self.hparams.student_temp)
+        self.ssl_loss = Distillation_Loss(self.hparams.ssl_classes, teacher_temp=self.hparams.teacher_temp, student_temp=self.hparams.student_temp)
         self.scaler = torch.cuda.amp.GradScaler()
 
     def create_ema_model(self):
@@ -115,15 +115,9 @@ class Classifier(pl.LightningModule):
         teacher_target = target_batch["weakly_aug"].to(self.device)
 
         _, predictions, loss, dino_loss = self.loss(coords, coords_weak, labels, student_target, teacher_target)
-
-        # self.manual_backward(loss)
-        # opt.step()
-
         self.scaler.scale(loss).backward()
         self.scaler.step(opt)
         self.scaler.update()
-
-        # if self.global_step % len(self.dm) == 0:
         lr_scheduler.step()
 
         self.train_acc(F.softmax(predictions, dim=1), labels)
@@ -263,7 +257,6 @@ class Classifier(pl.LightningModule):
 
     def test_epoch_end(self, outputs):
         target_accuracy = self.valid_acc_target.compute().item()
-        # self.log("final_accuracy", target_accuracy)
 
     def on_save_checkpoint(self, checkpoint):
         checkpoint["best_accuracy_target"] = self.best_accuracy_target
@@ -279,6 +272,5 @@ class Classifier(pl.LightningModule):
 
     def configure_optimizers(self):
         opt = get_optimizer(self.net.parameters())
-        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.hparams.epochs)
         scheduler = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=hcfg("lr"), epochs=self.hparams.epochs, steps_per_epoch=len(self.dm))
         return [opt], [{"scheduler": scheduler, "interval": "step", "frequency": 1}]

@@ -16,13 +16,6 @@ def get_model(device, tgt_decoder=False):
             from networks.dgcnn import DGCNN
             model = DGCNN(num_class=hcfg("num_classes"), device=device, feat_dims=hcfg("feat_dims"))
 
-    elif hcfg("task") == "reconstruction":
-        from networks.reconstruction import ReconstructionNet
-        model = ReconstructionNet(device, feat_dims=hcfg("feat_dims"))
-    elif hcfg("task") == "contrastive":
-        from networks.contrastive import ContrastiveNet
-        model = ContrastiveNet(device, feat_dims=hcfg("feat_dims"))
-
     if hcfg("restore_weights") != "null":
         model_artifact = wandb.run.use_artifact(hcfg("restore_weights")+ ":latest", type='model')
         model_dir = model_artifact.download()
@@ -61,28 +54,17 @@ class GCN(torch.nn.Module):
         self.conv1 = GCNConv(num_features, num_features)
         self.conv2 = GCNConv(num_features, num_features)
         self.conv3 = GCNConv(num_features, num_classes)
-        # self.conv1 = TransformerConv(num_features, num_features)
-        # self.bn1 = InstanceNorm(num_features)
-        # self.conv2 = TransformerConv(num_features, num_features)
-        # self.bn2 = InstanceNorm(num_features)
-        # self.conv3 = TransformerConv(num_features, num_classes)
         self.linear1 = nn.Linear(10, num_features)
-        # self.conv4 = GCNConv(num_features//2, num_classes)
     
     def forward(self, x, pseudo_y, edge_index, egde_values=None):
 
         y = self.linear1(pseudo_y)
         x = self.conv1(x+y, edge_index, egde_values)
-        # x = self.bn1(x)
         x = x.relu()
         x = F.dropout(x, p=0.5, training=self.training)
         f = self.conv2(x, edge_index, egde_values)
-        # x = self.bn2(x)
         x = f.relu()
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.conv3(x, edge_index, egde_values)
-        # x = f.relu()
-        # x = F.dropout(x, p=0.5, training=self.training)
-        # x = self.conv4(x, edge_index, egde_values)
         return f, x
    
